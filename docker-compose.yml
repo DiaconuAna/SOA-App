@@ -1,7 +1,8 @@
 services:
   # Authentication service (Flask app)
   auth_service:
-    build: .
+    build:
+      context: ./auth_service
     container_name: auth_service
     ports:
       - "5000:5000"  # Expose Flask app on port 5000
