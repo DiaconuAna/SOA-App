@@ -1,4 +1,16 @@
 services:
+  # NGINX API Gateway
+  api_gateway:
+    image: nginx:latest
+    container_name: api_gateway
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Mount your custom NGINX config
+    ports:
+      - "80:80"  # Expose the API Gateway on port 80
+    depends_on:
+      - auth_service  # Add other services here as needed
+
+
   # Authentication service (Flask app)
   auth_service:
     build:
@@ -27,3 +39,8 @@ services:
 # Volumes to persist data
 volumes:
   postgres_data:
+
+# Define a custom network
+networks:
+  app_network:
+    driver: bridge
