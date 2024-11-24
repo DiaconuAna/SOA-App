@@ -1,3 +1,5 @@
+import re
+
 from flask import Blueprint, request, jsonify
 from app.models import User
 from app.extensions import db
@@ -10,16 +12,32 @@ def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    name = data.get('name')
+    role = data.get('role')
 
-    if username is None or password is None:
-        return jsonify({"msg":"Username and password are required"}), 400
+    if username is None:
+        return jsonify({"msg":"Username is required"}), 400
+
+    # Restrict username to letters and numbers only
+    if not re.match("^[a-zA-Z0-9]+$", username):
+        return jsonify({"msg": "Username can only contain letters and numbers"}), 400
+
+    # Restrict role to 'librarian' or 'user'
+    if role not in ["librarian", "user"]:
+        return jsonify({"msg": "Role must be 'librarian' or 'user'"}), 400
+
+    if password is None:
+            return jsonify({"msg":"Password is required"}), 400
+
+    if name is None:
+            return jsonify({"msg":"Name is required"}), 400
 
     existing_user = User.query.filter_by(username=username).first()
     if existing_user is not None:
         return jsonify({"msg":"Username already exists"}), 400
 
     password_hash = hash_password(password)
-    new_user = User(username=username, password_hash=password_hash)
+    new_user = User(username=username, password_hash=password_hash, name=name, role=role)
     db.session.add(new_user)
     db.session.commit()
 
