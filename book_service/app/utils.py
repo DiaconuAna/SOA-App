@@ -4,19 +4,20 @@ from flask_jwt_extended import get_jwt, jwt_required
 
 import logging
 
-def role_required(required_role):
+def role_required(*roles):
     """
-    Decorator to restrict access to users with a specific role.
-    :param required_role: The role required to access the route.
+    Decorator to check if the user has one of the required roles.
+    :param roles: One or more roles ('librarian', 'user') that are allowed to access the route.
     """
     def decorator(func):
         @wraps(func)
         @jwt_required()
         def wrapper(*args, **kwargs):
             claims = get_jwt()
-            current_app.logger.debug(f"JWT Claims: {claims}")
-            if str(claims.get('role')) != required_role:
-                return jsonify({"msg": f"Access denied: {required_role} role required"}), 403
+            # current_app.logger.debug(f"JWT Claims: {claims}")
+            if claims.get('role') not in roles:
+                return jsonify({"msg": f"Access denied: One of the following roles is required: {', '.join(roles)}"}), 403
+                # return jsonify({"msg": f"Access denied: {required_role} role required"}), 403
             return func(*args, **kwargs)
         return wrapper
     return decorator
