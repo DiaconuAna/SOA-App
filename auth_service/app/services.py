@@ -14,5 +14,9 @@ def create_jwt_token(user):
     return create_access_token(
         identity=str(user.id),
         expires_delta=datetime.timedelta(hours=1),
-        additional_claims={"role": user.role}
+        additional_claims={
+            "role": user.role,
+            "name": user.name,
+            "username": user.username,
+        }
     )
