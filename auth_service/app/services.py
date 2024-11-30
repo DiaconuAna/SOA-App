@@ -11,4 +11,8 @@ def verify_password(password, password_hash):
     return check_password_hash(password_hash, password)
 
 def create_jwt_token(user):
-    return create_access_token(identity=user.id, expires_delta=datetime.timedelta(hours=1))
+    return create_access_token(
+        identity=str(user.id),
+        expires_delta=datetime.timedelta(hours=1),
+        additional_claims={"role": user.role}
+    )
