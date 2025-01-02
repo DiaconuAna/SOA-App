@@ -4,6 +4,10 @@ from flask import current_app
 from app.models import Book, Borrowing, db
 from datetime import datetime, timedelta
 
+###########################
+# BORROW BOOK
+###########################
+
 def on_borrow_book_message(ch, method, properties, body):
     with current_app.app_context():
         # Parse the message
@@ -80,7 +84,7 @@ def send_borrow_response(response):
         current_app.logger.error(f"Error sending borrow response: {str(e)}")
 
 
-def start_consuming():
+def start_borrow_request_consumer():
     # Set up RabbitMQ connection and consumer
     try:
         # Get the Flask app object
@@ -93,9 +97,91 @@ def start_consuming():
         # Set up the consumer callback
         channel.basic_consume(queue='borrow_request_queue', on_message_callback=on_borrow_book_message)
 
-        current_app.logger.info("Starting to consume messages...")
+        current_app.logger.info("Started listening for borrow requests...")
         # Start consuming
         channel.start_consuming()
 
     except Exception as e:
-        current_app.logger.error(f"Error in consuming messages: {str(e)}")
+        current_app.logger.error(f"Error in consuming borrow messages: {str(e)}")
+
+###########################
+# RETURN BOOK
+###########################
+
+def send_return_response(user_id, book_id, status, message):
+    """Send the return response back to User Service via RabbitMQ."""
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+        channel = connection.channel()
+
+        # Declare the response queue (if not already declared)
+        channel.queue_declare(queue='return_response_queue', durable=True)
+
+        response_message = json.dumps({
+            "user_id": user_id,
+            "book_id": book_id,
+            "status": status,
+            "message": message
+        })
+        channel.basic_publish(
+            exchange='',
+            routing_key='return_response_queue',
+            body=response_message,
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # Make the message persistent
+            )
+        )
+        connection.close()
+    except Exception as e:
+        print(f"Error sending response: {e}")
+
+
+def on_return_request(ch, method, properties, body):
+    """Callback function to handle return requests from User Service."""
+    try:
+        request_data = json.loads(body)
+        user_id = request_data['user_id']
+        book_id = request_data['book_id']
+
+        # Find the borrowing record for the book and user
+        borrowing = Borrowing.query.filter_by(user_id=user_id, book_id=book_id, returned_on=None).first()
+
+        if not borrowing:
+            # No active borrowing record found
+            send_return_response(user_id, book_id, 'failure', 'Book not found or not borrowed')
+        else:
+            # Mark the book as returned
+            borrowing.returned_on = datetime.utcnow()
+            db.session.commit()
+
+            # Increase available copies of the book
+            book = Book.query.filter_by(id=book_id).first()
+            if book:
+                book.available_copies += 1
+                db.session.commit()
+
+            send_return_response(user_id, book_id, 'success', f'Book "{book.title}" returned successfully')
+
+        # Acknowledge the message
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    except Exception as e:
+        send_return_response(user_id, book_id, 'failure', f'Error processing return request: {str(e)}')
+        print(f"Error processing return request: {e}")
+
+
+def start_return_request_consumer():
+    """Start consuming return requests from User Service."""
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+        channel = connection.channel()
+
+        # Declare the request queue
+        channel.queue_declare(queue='return_request_queue', durable=True)
+
+        # Start consuming the queue
+        channel.basic_consume(queue='return_request_queue', on_message_callback=on_return_request)
+        current_app.logger.info("Started listening for return requests...")
+        channel.start_consuming()
+    except Exception as e:
+        current_app.logger.error(f"Error in return request consumer: {str(e)}")

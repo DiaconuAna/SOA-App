@@ -4,8 +4,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from flask import jsonify, Blueprint, request
 from app.models import db, User
 from app.utils import role_required
-from app.messaging import send_borrow_request
-from app.cache import borrow_response_cache  # The shared queue
+from app.broker import send_borrow_request, send_return_request
+from app.cache import borrow_response_cache, return_response_cache
 
 
 user_bp = Blueprint('user', __name__)
@@ -70,6 +70,42 @@ def borrow_book():
         elif "already borrowed" in response['message']:
             return jsonify({"msg": response['message']}), 409  # Book already borrowed
         else:
+            return jsonify({"msg": response['message']}), 500  # Unexpected error
+    else:
+        # Catch-all for unexpected status
+        return jsonify({"msg": "An unexpected error occurred"}), 500
+
+
+@user_bp.route('/return', methods=['POST'])
+@role_required('user')  # Ensure the user is logged in
+def return_book():
+    data = request.get_json()
+    user_id = int(data.get('user_id'))
+    book_id = data.get('book_id')
+
+    if not user_id or not book_id:
+        return jsonify({"msg": "User ID and Book ID are required"}), 400
+
+    # Send return request to Book Service
+    send_return_request(user_id, book_id)
+
+    response = None
+    attempts = 0
+    while attempts < 10:
+        try:
+            response = return_response_cache.get(timeout=2)  # Wait for up to 2 seconds
+            break
+        except queue.Empty:
+            attempts += 1
+            continue
+
+    if not response:
+        return jsonify({"msg": "Request timed out, please try again later."}), 408  # Timeout if no response
+
+    # Handle response based on status
+    if response['status'] == 'success':
+        return jsonify({"msg": response['message']}), 200  # Borrow successful
+    elif response['status'] == 'failure':
             return jsonify({"msg": response['message']}), 500  # Unexpected error
     else:
         # Catch-all for unexpected status
