@@ -29,7 +29,6 @@ def create_app():
     app.register_blueprint(book_bp, url_prefix='/book')
 
     # Background thread for RabbitMQ consumer
-    # Background thread for RabbitMQ consumer
     def start_consumer_thread():
         def consume_in_thread():
             # Ensure the app context is available in the thread
@@ -38,7 +37,7 @@ def create_app():
 
         consumer_thread = threading.Thread(target=consume_in_thread, daemon=True)
         consumer_thread.start()
-        app.logger.info("RabbitMQ consumer thread started.")
+        app.logger.info("RabbitMQ book service consumer thread started.")
 
     # Start the consumer thread when the app starts
     start_consumer_thread()
