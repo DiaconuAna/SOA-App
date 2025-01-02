@@ -7,6 +7,8 @@ from config import Config
 import logging
 
 from flask_migrate import Migrate
+from app.messaging import send_borrow_request  # Import the RabbitMQ logic
+
 
 migrate = Migrate()
 logging.basicConfig(level=logging.DEBUG)

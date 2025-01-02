@@ -3,10 +3,13 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from app.models import Book, db, Borrowing
 from app.utils import role_required
-import os
+
+import pika, json, os
 
 book_bp = Blueprint('book', __name__)
+
 HOST_NAME = os.environ.get('HOST_NAME')
+RABBITMQ_HOST = 'rabbitmq'
 
 @book_bp.route('/add', methods=['POST'])
 @role_required('librarian')
@@ -92,4 +95,32 @@ def borrow_book():
         "book": book.title,
         "user_id": user_id,
         "return_by": return_by
+    }), 200
+
+@book_bp.route('/borrowed_books', methods=['GET'])
+@role_required('librarian', 'user')
+def get_borrowed_books():
+    user_id = request.args.get('user_id')
+
+    # Query the Borrowing table for books borrowed by this user
+    borrowings = Borrowing.query.filter_by(user_id=user_id, returned_on=None).all()
+
+    if not borrowings:
+        return jsonify({"msg": "No books borrowed"}), 404
+
+    borrowed_books = []
+    for borrowing in borrowings:
+        book = Book.query.get(borrowing.book_id)
+        if book:
+            borrowed_books.append({
+                "book_id": book.id,
+                "title": book.title,
+                "author": book.author,
+                "isbn": book.isbn,
+                "return_by": borrowing.return_by
+            })
+
+    return jsonify({
+        "borrowed_books": borrowed_books,
+        "hostname": os.getenv('HOST_NAME')
     }), 200
