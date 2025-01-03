@@ -1,0 +1,41 @@
+service: get-user-borrowings
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  environment:
+    DB_HOST: 192.168.100.100  # Use the container's internal name for Lambda
+    DB_PORT: 5434
+    DB_NAME: library_book_db
+    DB_USER: book_user
+    DB_PASSWORD: password123
+    JWT_SECRET_KEY: supersecretkey
+
+functions:
+  getUserBorrowings:
+    handler: handler.get_user_borrowings
+    events:
+      - http:
+          path: user/borrowings
+          method: get
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer: true
+
+resources:
+  Resources:
+    BookDBSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Allow Lambda access to the book_db
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 5434
+            ToPort: 5434
+            CidrIp: 0.0.0.0/0
