@@ -14,6 +14,7 @@ class Book(db.Model):
 
     # Relationship with Borrowing (1-to-many)
     borrowings = db.relationship("Borrowing", back_populates="book", cascade="all, delete-orphan")
+    waitinglist = db.relationship("WaitingList", back_populates="book", cascade="all, delete-orphan")
 
     def __init__(self, title, author, isbn, available_copies=1):
         self.title = title
@@ -47,3 +48,19 @@ class Borrowing(db.Model):
 
     def __repr__(self):
         return f'<Borrowing {self.book.title} by {self.user.username}>'
+
+class WaitingList(db.Model):
+    __tablename__ = 'waitinglist'
+
+    id = Column(db.Integer, primary_key=True)
+    book_id = Column(Integer, ForeignKey('books.id'), nullable=False)
+    user_id = Column(Integer, nullable=False)
+    status = Column(db.String(50), default='waiting')  # 'waiting' or 'notified'
+    book = relationship("Book", back_populates="waitinglist")
+
+    def __init__(self, book_id, user_id):
+        self.book_id = book_id
+        self.user_id = user_id
+
+    def __repr__(self):
+        return f'<WaitingList for {self.book.title} by {self.user.username}>'

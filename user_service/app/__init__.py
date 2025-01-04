@@ -10,6 +10,7 @@ import logging
 
 from flask_migrate import Migrate
 from app.broker import start_borrow_response_consumer, start_return_response_consumer  # Import the RabbitMQ logic
+from app.broker import start_kafka_notification_consumer
 
 migrate = Migrate()
 logging.basicConfig(level=logging.DEBUG)
@@ -46,8 +47,20 @@ def create_app():
         consumer_thread.start()
         app.logger.info("RabbitMQ user service return consumer thread started.")
 
+    def start_kafka_consumer_thread():
+        def consume_in_thread():
+            # Ensure the app context is available in the thread
+            with app.app_context():
+                start_kafka_notification_consumer()
+
+        consumer_thread = threading.Thread(target=consume_in_thread, daemon=True)
+        consumer_thread.start()
+        app.logger.info("Kafka borrow consumer thread started.")
+
+
     # Start the consumer threads when the app starts
     start_borrow_consumer_thread()
     start_return_consumer_thread()
+    start_kafka_consumer_thread()
 
     return app

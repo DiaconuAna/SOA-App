@@ -2,6 +2,53 @@ import pika
 import json
 from flask import current_app
 from app.cache import borrow_response_cache, return_response_cache
+from kafka import KafkaConsumer
+
+#####################################
+# KAFKA CONSUMER FOR BOOK BORROWING
+#####################################
+
+def start_kafka_notification_consumer():
+    """Starts a Kafka consumer to listen for notifications about book availability."""
+    with current_app.app_context():
+        try:
+            # Create a Kafka consumer
+
+            # consumer = KafkaConsumer(
+            #     'borrow-requests',
+            #     bootstrap_servers='kafka1:9092',
+            #     group_id='user-service-group',
+            #     value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+            #     auto_offset_reset='earliest'
+            # )
+            consumer = KafkaConsumer(
+                'book-availability',
+                bootstrap_servers='kafka1:9092',
+                group_id='user-service-group',
+                value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+                auto_offset_reset='earliest'
+                        )
+
+            current_app.logger.info("Kafka consumer for book availability notifications started.")
+
+            # Process incoming messages
+            for message in consumer:
+                event = message.value
+                user_id = event.get('user_id')
+                book_id = event.get('book_id')
+                timestamp = event.get('timestamp')
+
+                current_app.logger.info(
+                    f"Received Kafka notification event: User {user_id} is waiting for Book {book_id} (at {timestamp})."
+                )
+
+                # Notify the user (Example: Send email or push notification)
+                current_app.logger.info(
+                    f"Notification sent to User {user_id} about Book {book_id} availability."
+                )
+
+        except Exception as e:
+            current_app.logger.error(f"Error in Kafka notification consumer: {str(e)}")
 
 ###########################
 # BORROW BOOK

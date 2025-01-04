@@ -1,8 +1,40 @@
 import pika
 import json
 from flask import current_app
-from app.models import Book, Borrowing, db
+from app.models import Book, Borrowing, db, WaitingList
 from datetime import datetime, timedelta
+from kafka import KafkaProducer
+import os
+
+###########################
+# KAFKA PRODUCER SETUP
+###########################
+
+producer = KafkaProducer(
+    bootstrap_servers='kafka1:9092',
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
+
+def publish_borrow_request(book_id, user_id):
+    """Publishes a borrow request to the Kafka topic when a book is unavailable."""
+    event = {
+        "book_id": book_id,
+        "user_id": user_id,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    producer.send('borrow-requests', event)
+    current_app.logger.info(f"Published borrow request to Kafka: {event}")
+
+
+def notify_user_book_available(user_id, book_id):
+    """Notify the user that the book is available."""
+    event = {
+        "user_id": user_id,
+        "book_id": book_id,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    producer.send('book-availability', event)  # Publish a Kafka message to notify the user
+    current_app.logger.info(f"Published book availability notification for User {user_id} and Book {book_id}")
 
 ###########################
 # BORROW BOOK
@@ -25,8 +57,16 @@ def on_borrow_book_message(ch, method, properties, body):
                 response['message'] = f"Book with ID {book_id} not found."
                 current_app.logger.error(response['message'])
             elif book.available_copies <= 0:
-                response['message'] = f"No copies available for book {book_id}."
+                response['message'] = f"No copies available for book {book_id}. Subscribed."
                 current_app.logger.warning(response['message'])
+
+                # Add user to the waiting list
+                waiting_list_entry = WaitingList(book_id=book.id, user_id=user_id)
+                db.session.add(waiting_list_entry)
+                db.session.commit()
+
+                # Publish event to Kafka for borrow requests
+                # publish_borrow_request(book_id, user_id)
             else:
                 # Check if the user has already borrowed this book
                 existing_borrow = Borrowing.query.filter_by(
@@ -159,6 +199,17 @@ def on_return_request(ch, method, properties, body):
             if book:
                 book.available_copies += 1
                 db.session.commit()
+
+                # Check if there are users in the waiting list
+                waiting_list = WaitingList.query.filter_by(book_id=book_id).all()
+                if waiting_list:
+                    for entry in waiting_list:
+                        # Notify users in the waiting list that the book is now available
+                        notify_user_book_available(entry.user_id, book_id)
+
+                    # Remove users from the waiting list after notifying
+                    WaitingList.query.filter_by(book_id=book_id).delete()
+                    db.session.commit()
 
             send_return_response(user_id, book_id, 'success', f'Book "{book.title}" returned successfully')
 

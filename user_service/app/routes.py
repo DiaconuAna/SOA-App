@@ -1,6 +1,4 @@
 import queue
-import boto3
-import json
 
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from flask import jsonify, Blueprint, request
@@ -68,7 +66,7 @@ def borrow_book():
         if "not found" in response['message']:
             return jsonify({"msg": response['message']}), 404  # Book not found
         elif "No copies available" in response['message']:
-            return jsonify({"msg": response['message']}), 422  # No copies available
+            return jsonify({"msg": response['message']}), 200  # No copies available
         elif "already borrowed" in response['message']:
             return jsonify({"msg": response['message']}), 409  # Book already borrowed
         else:
