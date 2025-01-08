@@ -110,3 +110,21 @@ def return_book():
     else:
         # Catch-all for unexpected status
         return jsonify({"msg": "An unexpected error occurred"}), 500
+
+@user_bp.route('/users', methods=['GET'])
+@role_required('librarian')  # Ensure the user has the 'librarian' role
+def get_all_users():
+    """
+    Route for librarians to fetch a list of all users with their username, name, and ID.
+    """
+    users = User.query.all()
+
+    if not users:
+        return jsonify({"msg": "No users found"}), 404
+
+    user_list = [
+        {"id": user.id, "username": user.username, "name": user.name}
+        for user in users
+    ]
+
+    return jsonify({"users": user_list}), 200
