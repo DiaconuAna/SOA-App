@@ -5,6 +5,8 @@ from app.models import User
 from app.extensions import db
 from app.services import create_jwt_token, hash_password, verify_password
 
+from flask import current_app
+
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
@@ -49,6 +51,9 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+
+    current_app.logger.info("Data is %s", data)
+    current_app.logger.info("Username: %s, password: %s", username,  password)
 
     user = User.query.filter_by(username=username).first()
 

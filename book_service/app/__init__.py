@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 
 from app.extensions import db, jwt
 from app.routes import book_bp
@@ -18,8 +19,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # app.logger.info("Hello, BOOK SERVICE HERE")
-    # app.logger.debug(f"JWT_SECRET_KEY: {app.config['JWT_SECRET_KEY']}")
+    CORS(app)
 
     db.init_app(app)
     jwt.init_app(app)

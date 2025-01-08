@@ -5,4 +5,5 @@ Flask-JWT-Extended==4.4.4
 Flask-Migrate==3.1.0
 psycopg2-binary==2.9.3
 python-dotenv==0.19.2
-SQLAlchemy==1.4.41  # Ensure the version of SQLAlchemy is compatible
+SQLAlchemy==1.4.41
+flask-cors

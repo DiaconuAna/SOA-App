@@ -8,3 +8,4 @@ python-dotenv==0.19.2
 SQLAlchemy==1.4.41  # Ensure the version of SQLAlchemy is compatible
 pika
 kafka-python
+flask-cors
