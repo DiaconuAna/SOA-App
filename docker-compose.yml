@@ -164,6 +164,17 @@ services:
     networks:
       - app_network
 
+  lambda_faas:
+    build:
+      context: ./get-user-borrowings
+    container_name: lambda_faas
+    ports:
+      - "3000:3000"
+    environment:
+      - AWS_REGION=us-east-1
+      - SERVERLESS_ACCESS_KEY=AKPaAvFJ3hHYhcvI3Rzn4gtTI6V3zuhjmA2ote5AGd3H7
+    networks:
+      - app_network
 
 # Volumes to persist data
 volumes:
