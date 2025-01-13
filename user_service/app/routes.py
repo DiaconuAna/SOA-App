@@ -123,7 +123,7 @@ def get_all_users():
         return jsonify({"msg": "No users found"}), 404
 
     user_list = [
-        {"id": user.id, "username": user.username, "name": user.name}
+        {"id": user.id, "username": user.username, "name": user.name, "role": user.role}
         for user in users
     ]
 

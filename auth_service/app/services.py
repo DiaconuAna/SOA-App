@@ -18,5 +18,6 @@ def create_jwt_token(user):
             "role": user.role,
             "name": user.name,
             "username": user.username,
+            "id": user.id,
         }
     )

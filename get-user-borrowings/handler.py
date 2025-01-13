@@ -72,21 +72,24 @@ def get_user_borrowings(event, context):
         )
         cursor = connection.cursor()
 
-        # Query to get borrowings for the user
         query = """
-            SELECT b.title, br.borrowed_on, br.return_by
-            FROM borrowings br
-            JOIN books b ON br.book_id = b.id
-            WHERE br.user_id = %s AND br.returned_on IS NULL;
-        """
+                  SELECT b.id AS book_id, b.title, b.author, b.isbn, br.borrowed_on, br.return_by
+                  FROM borrowings br
+                  JOIN books b ON br.book_id = b.id
+                  WHERE br.user_id = %s AND br.returned_on IS NULL;
+              """
         cursor.execute(query, (user_id,))
         rows = cursor.fetchall()
 
+        # Format the response to include book ID, author, and ISBN
         borrowings = [
             {
-                "title": row[0],
-                "borrowed_on": row[1].isoformat() if isinstance(row[1], datetime) else row[1],
-                "return_by": row[2].isoformat() if isinstance(row[2], datetime) else row[2]
+                "book_id": row[0],
+                "title": row[1],
+                "author": row[2],
+                "isbn": row[3],
+                "borrowed_on": row[4].isoformat() if isinstance(row[4], datetime) else row[4],
+                "return_by": row[5].isoformat() if isinstance(row[5], datetime) else row[5]
             }
             for row in rows
         ]
