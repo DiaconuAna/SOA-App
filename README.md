@@ -39,7 +39,7 @@ and the **Book Service** to handle borrowing and returning books. When a user wa
 Event streaming is built using Apache Kafka to manage data streaming and real-time processing. In this context, Kafka is
 used for event-driven communication between the **Book Service** and the **User Service**. When a user attempts to borrow
 a book that is no longer available, the **Book Service** emits an event about the book's availability via Kafka, which
-the **User Service** consumes to notify the user about the unavailability in real time
+the **User Service** consumes to notify the user about the unavailability in real time through an e-mail (using `Flask-Mail`).
 
 ### FaaS
 

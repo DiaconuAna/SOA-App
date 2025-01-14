@@ -3,16 +3,40 @@ import json
 from flask import current_app
 from app.cache import borrow_response_cache, return_response_cache
 from kafka import KafkaConsumer
+from flask_mail import Mail, Message
+
+import logging
+
+logging.getLogger("pika").setLevel(logging.INFO)
+logging.getLogger("kafka").setLevel(logging.ERROR)
 
 #####################################
 # KAFKA CONSUMER FOR BOOK BORROWING
 #####################################
 
-def start_kafka_notification_consumer():
+def send_email_notification(user_id, book_id, mail):
+    """Send an email notification to the user about book availability."""
+    try:
+        # Example user email and book details lookup (replace with actual database query)
+        user_email = 'parkams13@gmail.com'  # Function to fetch user email
+
+        # Create email message
+        subject = f"Book Availability Notification: {book_id}"
+        body = f"Dear User,\n\nThe book you were waiting for is now available. Please log in to borrow it.\n\nThank you!"
+
+        msg = Message(subject, recipients=[user_email], body=body, sender="noreply@library.com")
+
+        # Send email
+        mail.send(msg)
+        current_app.logger.info(f"***** Email sent to {user_email} about book {book_id} availability.")
+
+    except Exception as e:
+        current_app.logger.error(f"Failed to send email notification: {str(e)}")
+
+def start_kafka_notification_consumer(mail):
     """Starts a Kafka consumer to listen for notifications about book availability."""
     with current_app.app_context():
         try:
-            # Create a Kafka consumer
 
             # consumer = KafkaConsumer(
             #     'borrow-requests',
@@ -31,7 +55,6 @@ def start_kafka_notification_consumer():
 
             current_app.logger.info("Kafka consumer for book availability notifications started.")
 
-            # Process incoming messages
             for message in consumer:
                 event = message.value
                 user_id = event.get('user_id')
@@ -42,7 +65,8 @@ def start_kafka_notification_consumer():
                     f"Received Kafka notification event: User {user_id} is waiting for Book {book_id} (at {timestamp})."
                 )
 
-                # Notify the user (Example: Send email or push notification)
+                send_email_notification(user_id, book_id, mail)
+
                 current_app.logger.info(
                     f"Notification sent to User {user_id} about Book {book_id} availability."
                 )

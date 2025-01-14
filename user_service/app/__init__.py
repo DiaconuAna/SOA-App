@@ -13,14 +13,20 @@ from flask_migrate import Migrate
 from app.broker import start_borrow_response_consumer, start_return_response_consumer  # Import the RabbitMQ logic
 from app.broker import start_kafka_notification_consumer
 
+from flask_mail import Mail
+
 migrate = Migrate()
 logging.basicConfig(level=logging.DEBUG)
+
+mail = Mail()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
     CORS(app)
+
+    mail.init_app(app)
 
     db.init_app(app)
     jwt.init_app(app)
@@ -54,7 +60,7 @@ def create_app():
         def consume_in_thread():
             # Ensure the app context is available in the thread
             with app.app_context():
-                start_kafka_notification_consumer()
+                start_kafka_notification_consumer(mail)
 
         consumer_thread = threading.Thread(target=consume_in_thread, daemon=True)
         consumer_thread.start()

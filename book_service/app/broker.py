@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 from kafka import KafkaProducer
 import os
 
+import logging
+
+logging.getLogger("pika").setLevel(logging.INFO)
+
 ###########################
 # KAFKA PRODUCER SETUP
 ###########################
