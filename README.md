@@ -83,6 +83,7 @@ It provides REST API endpoints for user management and generates secure JWT toke
 
 This is the corresponding UML diagram generated with Python's `graphviz` library:
 
+![authUML](https://github.com/DiaconuAna/SOA-App/blob/main/Resources/AuthUML.png)
 
 ## 2. **Book Microservice**
 The Book Microservice manages the library's books, borrowings, and waiting lists. It provides functionality for adding, searching, and managing books, and supports integration with RabbitMQ for borrowing events.
@@ -105,7 +106,7 @@ The Book Microservice manages the library's books, borrowings, and waiting lists
 
 This is the corresponding UML diagram generated with Python's `graphviz` library:
 
-
+![bookUML](https://github.com/DiaconuAna/SOA-App/blob/main/Resources/BookUML.png)
 
 ## 3. **User Microservice**
 The User Microservice manages user profiles, borrowing actions, and communication with the Book Microservice via RabbitMQ. It ensures secure access using JWT tokens.
@@ -127,3 +128,5 @@ The User Microservice manages user profiles, borrowing actions, and communicatio
   - `send_return_request`: Sends return requests to RabbitMQ.
 
 This is the corresponding UML diagram generated with Python's `graphviz` library:
+
+![userUML](https://github.com/DiaconuAna/SOA-App/blob/main/Resources/UserUML.png)
