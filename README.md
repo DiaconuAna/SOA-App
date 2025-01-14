@@ -61,3 +61,69 @@ a modular and scalable interface.
 This is illustrated in the following architecture diagram:
 
 ![frontend_arch](https://github.com/DiaconuAna/SOA-App/blob/main/Resources/FrontendArchitecture.png)
+
+---
+
+## A detailed view of the microservices
+
+### 1. **Authentification Microservice**
+The Authentification Microservice handles user authentication and registration.
+It provides REST API endpoints for user management and generates secure JWT tokens for authentication.
+
+**Key Features**
+- User registration with input validation.
+- Login functionality with secure password hashing and verification.
+- JWT token generation for authenticated access.
+
+**Main Components**
+- **User Model**: Represents user data including `username`, `password_hash`, `name`, and `role` (user or librarian).
+- **REST API Endpoints**:
+  - `/register`: Register a new user.
+  - `/login`: Authenticate a user and return a JWT token.
+
+This is the corresponding UML diagram generated with Python's `graphviz` library:
+
+
+## 2. **Book Microservice**
+The Book Microservice manages the library's books, borrowings, and waiting lists. It provides functionality for adding, searching, and managing books, and supports integration with RabbitMQ for borrowing events.
+
+### **Key Features**
+- Add new books with details like title, author, ISBN, and available copies.
+- Search books by title or author.
+- Manage borrowings and waiting lists.
+
+### **Main Components**
+- **Book Model**: Stores book details such as `title`, `author`, `isbn`, and `available_copies`.
+- **Borrowing Model**: Tracks user borrowings, including `borrowed_on` and `return_by` dates.
+- **WaitingList Model**: Maintains a list of users waiting for unavailable books.
+- **REST API Endpoints**:
+  - `/add`: Add a new book (librarian only).
+  - `/all_books`: Retrieve all books.
+  - `/borrowed_books`: Get books borrowed by a user.
+  - `/search`: Search books by title.
+  - `/search_by_author`: Search books by author.
+
+This is the corresponding UML diagram generated with Python's `graphviz` library:
+
+
+
+## 3. **User Microservice**
+The User Microservice manages user profiles, borrowing actions, and communication with the Book Microservice via RabbitMQ. It ensures secure access using JWT tokens.
+
+### **Key Features**
+- Retrieve and update user profiles.
+- Handle borrowing and returning of books with RabbitMQ integration.
+- Fetch all users (for librarians).
+
+### **Main Components**
+- **User Model**: Represents user profiles including `username`, `name`, `role`, and `created_at`.
+- **REST API Endpoints**:
+  - `/profile`: Retrieve or create a user profile.
+  - `/borrow`: Send a borrow request via RabbitMQ.
+  - `/return`: Send a return request via RabbitMQ.
+  - `/users`: Fetch all users (for librarians).
+- **Messaging Integration**:
+  - `send_borrow_request`: Sends borrow requests to RabbitMQ.
+  - `send_return_request`: Sends return requests to RabbitMQ.
+
+This is the corresponding UML diagram generated with Python's `graphviz` library:
