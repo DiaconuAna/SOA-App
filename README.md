@@ -50,6 +50,8 @@ The function is deployed and managed using the **Serverless Framework**, for eff
 
 All of the above are illustrated in the following architecture diagram:
 
+![backend_arch](https://github.com/DiaconuAna/SOA-App/blob/main/Resources/BackendArchitecture.png)
+
 ### Microfrontend Architecture
 
 The front-end of the library management application is built as a microfrontend architecture using Module Federation
@@ -57,3 +59,5 @@ with Webpack. It consists of a **host** (`shell`) and three **microfrontends** (
 a modular and scalable interface.
 
 This is illustrated in the following architecture diagram:
+
+![frontend_arch](https://github.com/DiaconuAna/SOA-App/blob/main/Resources/FrontendArchitecture.png)
