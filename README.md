@@ -8,7 +8,7 @@ authentication, user and book management. The application is fully containerized
 all its components orchestrated and managed through Docker Compose.
 
 The system integrates several backend services developed in Python using Flask,
-a microfrontend architecture built with Angular and Module Federation,
+a microfrontend architecture built with Angular and Module Federation (for more details refer to [this repository](https://github.com/DiaconuAna/LibMgmtAppFE)),
 and an NGINX load-balanced API gateway for efficient routing. The application also contains
 support for serverless functions using AWS Lambda. Message-based communication between micro-services is managed through RabbitMQ,
 and event-streaming using Apache Kafka. The REST API is secured using JWT tokens to ensure safe authentication and authorization.
